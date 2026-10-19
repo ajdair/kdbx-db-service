@@ -1,0 +1,18 @@
+# Adds the web UI to a DB Service deployment. Use it together with docker-compose.yaml:
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up -d
+#
+# The UI joins the same project and the kx-db network, so no other config is needed.
+services:
+  kx-db-ui:
+    container_name: kx-db-ui
+    image: ghcr.io/ajdair/kdbx-db-service-ui:${DS_UI_TAG:-0.1.0}
+    # Only used with --build from a checkout that has the ui/ folder (paths resolve from docker-compose.yaml).
+    build: ./ui
+    mem_limit: ${DS_OTHER_MEM_LIMIT:-0}
+    ports:
+      - 127.0.0.1:${DS_PORT_UI:-3000}:80
+    networks:
+      - kx-db
+    depends_on:
+      - kx-db-gw
