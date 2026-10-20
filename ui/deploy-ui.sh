@@ -9,13 +9,13 @@
 # This replaces any existing container with the same name
 # Settings (environment variables, the first two match docker-compose.ui.yaml):
 #   DS_PORT_UI=3000        port on localhost
-#   DS_UI_TAG=0.1.0        published image version used by --pull
+#   DS_UI_TAG=latest       published image version used by --pull (newest release by default)
 #   DS_UI_NETWORK=kx-db    Docker network of the DB Service stack
 #   DS_UI_NAME=kx-db-ui    container name
 set -euo pipefail
 
 PORT="${DS_PORT_UI:-3000}"
-TAG="${DS_UI_TAG:-0.1.0}"
+TAG="${DS_UI_TAG:-latest}"
 NETWORK="${DS_UI_NETWORK:-kx-db}"
 NAME="${DS_UI_NAME:-kx-db-ui}"
 REMOTE_IMAGE="ghcr.io/ajdair/kdbx-db-service-ui:${TAG}"

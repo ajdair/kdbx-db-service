@@ -1,3 +1,14 @@
+import { UTCDate } from "@date-fns/utc";
+import {
+  addDays,
+  format,
+  formatDistanceToNowStrict,
+  isSameDay,
+  isSameMonth,
+  isSameYear,
+  isValid,
+  parseISO,
+} from "date-fns";
 import type { Row } from "@/lib/api";
 
 export function cell(value: unknown): string {
@@ -32,23 +43,21 @@ export function download(filename: string, text: string, type = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
+const MIDNIGHT = "yyyy-MM-dd'T'00:00:00";
+
 export function isoMidnight(offsetDays: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offsetDays);
-  return `${d.toISOString().slice(0, 10)}T00:00:00`;
+  return format(addDays(new UTCDate(), offsetDays), MIDNIGHT);
 }
 
-// q timestamps arrive as "2026-03-02T00:00:00.000000000". Date only has millisecond precision, which is enough here.
+// q timestamps arrive as "2026-03-02T00:00:00.000000000", and job times as "2026-10-20T13:27:03.183652678". Both are UTC with no zone marker. Date only has millisecond precision, which is enough here.
 export function parseTs(value: unknown): Date | null {
   if (typeof value !== "string") return null;
-  const d = new Date(`${value.slice(0, 23)}Z`);
-  return Number.isNaN(d.getTime()) ? null : d;
+  const d = parseISO(`${value.slice(0, 23)}Z`);
+  return isValid(d) ? d : null;
 }
 
 export function dayStart(d: Date, offsetDays = 0): string {
-  const x = new Date(d.getTime());
-  x.setUTCDate(x.getUTCDate() + offsetDays);
-  return `${x.toISOString().slice(0, 10)}T00:00:00`;
+  return format(addDays(new UTCDate(d), offsetDays), MIDNIGHT);
 }
 
 // "2026-03-02T00:00:00" -> "2026.03.02D00:00:00" for q literals.
@@ -57,19 +66,29 @@ export function qTimestamp(iso: string): string {
 }
 
 export function ago(d: Date): string {
-  const s = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000));
-  if (s < 90) return "just now";
-  const units: [number, string][] = [
-    [60, "minute"],
-    [3600, "hour"],
-    [86400, "day"],
-    [86400 * 30, "month"],
-    [86400 * 365, "year"],
-  ];
-  let best: [number, string] = [1, "second"];
-  for (const u of units) if (s >= u[0]) best = u;
-  const n = Math.floor(s / best[0]);
-  return `${n} ${best[1]}${n === 1 ? "" : "s"} ago`;
+  if (Math.abs(Date.now() - d.getTime()) < 90_000) return "just now";
+  return formatDistanceToNowStrict(d, { addSuffix: true });
+}
+
+// "3 Mar 2026, 23:59 UTC"
+export function utcMinute(d: Date): string {
+  return `${format(new UTCDate(d), "d MMM yyyy, HH:mm")} UTC`;
+}
+
+// A short date range in UTC: "3 Mar 2026", "2-3 Mar 2026", "2 Mar to 3 Apr 2026", "2 Mar 2025 to 3 Apr 2026".
+export function formatRange(first: Date, last: Date): string {
+  const a = new UTCDate(first);
+  const b = new UTCDate(last);
+  if (isSameDay(a, b)) return format(a, "d MMM yyyy");
+  if (isSameMonth(a, b)) return `${format(a, "d")}-${format(b, "d MMM yyyy")}`;
+  if (isSameYear(a, b))
+    return `${format(a, "d MMM")} to ${format(b, "d MMM yyyy")}`;
+  return `${format(a, "d MMM yyyy")} to ${format(b, "d MMM yyyy")}`;
+}
+
+// A time the browser shows in the viewer's own timezone: "20 Oct 2026, 14:07:56".
+export function localTime(d: Date): string {
+  return format(d, "d MMM yyyy, HH:mm:ss");
 }
 
 export function splitList(text: string): string[] {

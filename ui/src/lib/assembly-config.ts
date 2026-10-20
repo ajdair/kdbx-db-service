@@ -72,6 +72,5 @@ export function useAssemblySummary() {
     queryKey: ["config", assembly],
     queryFn: () => exportAssembly(assembly || undefined),
     select: summariseAssembly,
-    retry: false,
   });
 }

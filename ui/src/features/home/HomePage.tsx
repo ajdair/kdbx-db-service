@@ -28,7 +28,7 @@ import { LinkButton } from "@/components/LinkButton";
 import { listTables } from "@/lib/api";
 import { useAppState } from "@/lib/app-state";
 import { useAssemblySummary } from "@/lib/assembly-config";
-import { ago } from "@/lib/format";
+import { ago, formatRange, utcMinute } from "@/lib/format";
 import { useStatus } from "@/lib/status";
 import { useTableSummaries, type TableSummary } from "@/lib/summary";
 
@@ -57,14 +57,6 @@ function Tile({
   );
 }
 
-function dateOnly(d: Date | null): string {
-  return d ? d.toISOString().slice(0, 10) : "";
-}
-
-function utcMinute(d: Date): string {
-  return `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
-}
-
 function TableCard({ s }: { s: TableSummary }) {
   return (
     <Card size="sm">
@@ -83,9 +75,7 @@ function TableCard({ s }: { s: TableSummary }) {
           {s.first && s.last ? (
             <>
               <dt className="text-muted-foreground">Range</dt>
-              <dd className="num text-right">
-                {dateOnly(s.first)} to {dateOnly(s.last)}
-              </dd>
+              <dd className="num text-right">{formatRange(s.first, s.last)}</dd>
               <dt className="text-muted-foreground">Latest data</dt>
               <dd className="text-right" title={utcMinute(s.last)}>
                 {ago(s.last)}
@@ -202,7 +192,6 @@ export function HomePage() {
   const tables = useQuery({
     queryKey: ["tables", assembly],
     queryFn: () => listTables(assembly || undefined),
-    retry: false,
   });
   const [all, setAll] = useState(false);
 
@@ -267,7 +256,7 @@ export function HomePage() {
             pending
               ? "Counting"
               : failed
-                ? `${failed} table(s) could not be counted`
+                ? `Partial: ${failed} table(s) could not be counted`
                 : undefined
           }
         />
@@ -275,12 +264,7 @@ export function HomePage() {
           label="Data range"
           value={
             earliest && latest ? (
-              <span className="flex flex-col text-base leading-tight">
-                <span>{dateOnly(earliest)}</span>
-                <span className="text-muted-foreground">
-                  to {dateOnly(latest)}
-                </span>
-              </span>
+              <span className="text-base">{formatRange(earliest, latest)}</span>
             ) : pending ? (
               <Skeleton className="h-8 w-32" />
             ) : (
@@ -326,11 +310,21 @@ export function HomePage() {
                 </CardHeader>
                 <CardContent>
                   {q?.isError ? (
-                    <p className="text-sm text-destructive">
-                      {q.error instanceof Error
-                        ? q.error.message
-                        : "Could not summarise"}
-                    </p>
+                    <div className="flex flex-col items-start gap-2">
+                      <p className="text-sm text-destructive">
+                        {q.error instanceof Error
+                          ? q.error.message
+                          : "Could not summarise"}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={q.isFetching}
+                        onClick={() => q.refetch()}
+                      >
+                        <RefreshCwIcon /> {q.isFetching ? "Retrying" : "Retry"}
+                      </Button>
+                    </div>
                   ) : (
                     <Skeleton className="h-20" />
                   )}

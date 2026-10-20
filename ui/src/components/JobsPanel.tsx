@@ -1,4 +1,5 @@
 import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { XIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,12 @@ import {
   getImport,
   type Job,
 } from "@/lib/api";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { localTime, parseTs } from "@/lib/format";
 import { useAppState, type TrackedJob } from "@/lib/app-state";
 
 const FINAL = new Set(["completed", "errored", "canceled"]);
@@ -55,12 +62,13 @@ function JobDetails({ job, tracked }: { job: Job; tracked: TrackedJob }) {
       <Detail label="Job id">
         <span className="font-mono">{tracked.id}</span>
       </Detail>
-      <Detail label="Started">
-        {new Date(tracked.createdAt).toLocaleString()}
-      </Detail>
+      <Detail label="Started">{localTime(new Date(tracked.createdAt))}</Detail>
       {job.updated ? (
         <Detail label="Last update">
-          {new Date(job.updated).toLocaleString()}
+          {(() => {
+            const d = parseTs(job.updated);
+            return d ? localTime(d) : job.updated;
+          })()}
         </Detail>
       ) : null}
       {job.affectedTables?.length ? (
@@ -224,13 +232,23 @@ export function JobsPanel({
                       Cancel
                     </Button>
                   ) : null}
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => forgetJob(j.id)}
-                  >
-                    Forget
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          aria-label="Clear this job from browser memory"
+                          onClick={() => forgetJob(j.id)}
+                        >
+                          <XIcon />
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>
+                      Clear this job from browser memory
+                    </TooltipContent>
+                  </Tooltip>
                 </span>
               </summary>
               {job ? (

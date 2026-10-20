@@ -2,9 +2,28 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
+import { StreamLanguage } from "@codemirror/language";
+import { q } from "@codemirror/legacy-modes/mode/q";
 import { PlayIcon, TriangleAlertIcon } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { HelpTip } from "@/components/HelpTip";
+import {
+  AGG_HELP,
+  END_HELP,
+  FILL_HELP,
+  FILTER_HELP,
+  GROUP_BY_HELP,
+  INPUT_TZ_HELP,
+  LABELS_HELP,
+  LIMIT_HELP,
+  MERGE_LAMBDA_HELP,
+  OUTPUT_TZ_HELP,
+  SORT_HELP,
+  START_HELP,
+  TEMPORALITY_HELP,
+  TZ_COLS_HELP,
+} from "@/lib/help";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,27 +50,18 @@ import { useAppState } from "@/lib/app-state";
 import { isoMidnight, qTimestamp, splitList } from "@/lib/format";
 import { latestWindow, useTableSummary } from "@/lib/summary";
 
-const AGG_FNS = [
-  "count",
-  "sum",
-  "avg",
-  "min",
-  "max",
-  "first",
-  "last",
-  "dev",
-  "var",
-  "distinct",
-];
+const qLanguage = StreamLanguage.define(q);
 
 function Field({
   label,
   children,
   grow,
+  help,
 }: {
   label: string;
   children: React.ReactNode;
   grow?: boolean;
+  help?: string;
 }) {
   return (
     <div
@@ -59,7 +69,10 @@ function Field({
         grow ? "flex min-w-48 flex-1 flex-col gap-1.5" : "flex flex-col gap-1.5"
       }
     >
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {help ? <HelpTip>{help}</HelpTip> : null}
+      </Label>
       {children}
     </div>
   );
@@ -204,7 +217,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
             onTable(t);
           }}
         />
-        <Field label={`Start (inclusive, ${inputTZ.trim() || "UTC"})`}>
+        <Field label={`Start (${inputTZ.trim() || "UTC"})`} help={START_HELP}>
           <Input
             id="q-start"
             className="w-56 font-mono"
@@ -212,7 +225,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
             onChange={(e) => setStart(e.target.value)}
           />
         </Field>
-        <Field label={`End (exclusive, ${inputTZ.trim() || "UTC"})`}>
+        <Field label={`End (${inputTZ.trim() || "UTC"})`} help={END_HELP}>
           <Input
             id="q-end"
             className="w-56 font-mono"
@@ -220,7 +233,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
             onChange={(e) => setEnd(e.target.value)}
           />
         </Field>
-        <Field label="Row limit">
+        <Field label="Row limit" help={LIMIT_HELP}>
           <Input
             id="q-limit"
             className="num w-24"
@@ -236,7 +249,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
         </p>
       ) : null}
       <div className="flex flex-wrap gap-3">
-        <Field label="Group by (comma separated)" grow>
+        <Field label="Group by" grow help={GROUP_BY_HELP}>
           <Input
             id="q-groupby"
             className="font-mono"
@@ -245,10 +258,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
             onChange={(e) => setGroupBy(e.target.value)}
           />
         </Field>
-        <Field
-          label={`Aggregations, one per line as out,fn,col (${AGG_FNS.slice(0, 5).join(", ")}, ...)`}
-          grow
-        >
+        <Field label="Aggregations" grow help={AGG_HELP}>
           <Textarea
             id="q-agg"
             className="font-mono text-xs"
@@ -258,7 +268,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
             onChange={(e) => setAgg(e.target.value)}
           />
         </Field>
-        <Field label="Filter (JSON)" grow>
+        <Field label="Filter (JSON)" grow help={FILTER_HELP}>
           <Textarea
             id="q-filter"
             className="font-mono text-xs"
@@ -269,11 +279,6 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
           />
         </Field>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Filters are [operator, column, value] triples. Operators: = &lt;&gt;
-        &lt; &gt; &lt;= &gt;= in like within. Nest with and, or, not inside the
-        list, for example [["or", ["=","sym","EURUSD"], ["=","sym","USDJPY"]]].
-      </p>
 
       <details className="rounded-lg border p-3">
         <summary className="cursor-pointer text-sm select-none">
@@ -281,7 +286,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
         </summary>
         <div className="mt-3 flex flex-col gap-3">
           <div className="flex flex-wrap gap-3">
-            <Field label="Fill nulls">
+            <Field label="Fill nulls" help={FILL_HELP}>
               <Select value={fill} onValueChange={(v) => setFill(v ?? "none")}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
@@ -293,7 +298,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Temporality">
+            <Field label="Temporality" help={TEMPORALITY_HELP}>
               <Select
                 value={temporality}
                 onValueChange={(v) => setTemporality(v ?? "snapshot")}
@@ -307,7 +312,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Sort by (comma separated, after the query)">
+            <Field label="Sort by" help={SORT_HELP}>
               <Input
                 id="q-sort"
                 className="w-56 font-mono"
@@ -317,12 +322,8 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
               />
             </Field>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Snapshot returns one block from start to end. Slice returns the same
-            time of day for each date in the range.
-          </p>
           <div className="flex flex-wrap gap-3">
-            <Field label="Input timezone (for start and end)">
+            <Field label="Input timezone" help={INPUT_TZ_HELP}>
               <Input
                 id="q-intz"
                 className="w-52"
@@ -332,7 +333,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
                 onChange={(e) => setInputTZ(e.target.value)}
               />
             </Field>
-            <Field label="Output timezone">
+            <Field label="Output timezone" help={OUTPUT_TZ_HELP}>
               <Input
                 id="q-outtz"
                 className="w-52"
@@ -342,7 +343,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
                 onChange={(e) => setOutputTZ(e.target.value)}
               />
             </Field>
-            <Field label="Columns to convert (comma separated)">
+            <Field label="Columns to convert" help={TZ_COLS_HELP}>
               <Input
                 id="q-outtzcols"
                 className="w-56 font-mono"
@@ -357,7 +358,7 @@ function BuilderTab({ table, tables, onTable, onResult, onError }: TabProps) {
               ))}
             </datalist>
           </div>
-          <Field label="Labels (one key=value per line; targets every assembly with these labels)">
+          <Field label="Labels" help={LABELS_HELP}>
             <Textarea
               id="q-labels"
               className="font-mono text-xs"
@@ -450,14 +451,14 @@ function CodeTab({
           value={code}
           height="11rem"
           theme={theme}
-          extensions={kind === "sql" ? [sql()] : []}
+          extensions={kind === "sql" ? [sql()] : [qLanguage]}
           onChange={setEdited}
           basicSetup={{ lineNumbers: true, foldGutter: false }}
         />
       </div>
       {kind === "q" ? (
         <>
-          <Field label="Merge lambda across tiers (optional)">
+          <Field label="Merge lambda" help={MERGE_LAMBDA_HELP}>
             <Input
               id="q-agg-lambda"
               className="font-mono"
@@ -468,18 +469,25 @@ function CodeTab({
           </Field>
           <Alert>
             <TriangleAlertIcon />
-            <AlertDescription>
-              This runs arbitrary q on the gateway with no authentication. The
-              gateway runs your query on each tier (memory, intraday,
-              historical) and joins the results, so a plain aggregate such as
-              select count i returns one row per tier unless you pass a merge
-              lambda. .kxi.selectTable merges for you. Bound the time range.
+            <AlertDescription className="flex flex-col gap-1.5">
+              <p>
+                This runs arbitrary q on the gateway, with no authentication.
+              </p>
+              <p>
+                The gateway runs your query on each tier (memory, intraday,
+                historical) and joins the results. A plain aggregate such as{" "}
+                <code>select count i</code> therefore returns one row per tier.
+                To get one combined row, add a merge lambda that receives the
+                list of per-tier results, for example{" "}
+                <code>{"{select n:sum n from raze x}"}</code>.
+              </p>
+              <p>Always bound the time range.</p>
             </AlertDescription>
           </Alert>
         </>
       ) : (
         <p className="text-sm text-muted-foreground">
-          SELECT only. Use SQL literals such as TIMESTAMP '2026-03-02T00:00:00'.
+          SELECT only - this scratchpad only support SELECT statements.
         </p>
       )}
       <div>
@@ -500,7 +508,6 @@ export function QueryPage() {
   const tables = useQuery({
     queryKey: ["tables", assembly],
     queryFn: () => listTables(assembly || undefined),
-    retry: false,
   });
   const wanted = params.get("table") ?? "";
   const table =

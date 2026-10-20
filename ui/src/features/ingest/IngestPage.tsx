@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { UploadIcon } from "lucide-react";
+import { HelpTip } from "@/components/HelpTip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,17 +26,25 @@ import {
 } from "@/lib/api";
 import { useAppState } from "@/lib/app-state";
 import { splitList } from "@/lib/format";
+import { INGEST } from "@/lib/help";
 
 function Field({
   label,
+  help,
+  href,
   children,
 }: {
   label: string;
+  help?: string;
+  href?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {help ? <HelpTip href={href}>{help}</HelpTip> : null}
+      </Label>
       {children}
     </div>
   );
@@ -44,25 +53,30 @@ function Field({
 function Check({
   id,
   label,
+  help,
   checked,
   onChange,
 }: {
   id: string;
   label: string;
+  help?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label htmlFor={id} className="flex items-center gap-2 text-sm">
-      <input
-        id={id}
-        type="checkbox"
-        className="size-4 accent-primary"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
-    </label>
+    <div className="flex items-center gap-2 text-sm">
+      <label htmlFor={id} className="flex items-center gap-2">
+        <input
+          id={id}
+          type="checkbox"
+          className="size-4 accent-primary"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        {label}
+      </label>
+      {help ? <HelpTip>{help}</HelpTip> : null}
+    </div>
   );
 }
 
@@ -74,7 +88,7 @@ function Mode({
   onChange: (v: string) => void;
 }) {
   return (
-    <Field label="Mode">
+    <Field label="Mode" help={INGEST.mode}>
       <Select value={value} onValueChange={(v) => onChange(v ?? "merge")}>
         <SelectTrigger className="w-32">
           <SelectValue />
@@ -117,6 +131,7 @@ export function IngestPage() {
   const [dCreate, setDCreate] = useState(false);
   const [dColumns, setDColumns] = useState("");
   const [dTypes, setDTypes] = useState("");
+  const [dAdvanced, setDAdvanced] = useState(false);
 
   // kdb HDB
   const [kPath, setKPath] = useState("");
@@ -230,7 +245,7 @@ export function IngestPage() {
                 </Field>
                 <Mode value={dMode} onChange={setDMode} />
               </div>
-              <Field label="Rows (JSON array of objects, or of arrays when you give column names)">
+              <Field label="Rows" help={INGEST.rows}>
                 <Textarea
                   id="d-json"
                   className="font-mono text-xs"
@@ -242,15 +257,23 @@ export function IngestPage() {
               <Check
                 id="d-create"
                 label="Create the table if it does not exist"
+                help={INGEST.createInline}
                 checked={dCreate}
-                onChange={setDCreate}
+                onChange={(v) => {
+                  setDCreate(v);
+                  if (v) setDAdvanced(true);
+                }}
               />
-              <details className="rounded-lg border p-3">
+              <details
+                className="rounded-lg border p-3"
+                open={dAdvanced}
+                onToggle={(e) => setDAdvanced(e.currentTarget.open)}
+              >
                 <summary className="cursor-pointer text-sm select-none">
                   Advanced options
                 </summary>
                 <div className="mt-3 flex flex-wrap gap-3">
-                  <Field label="Column names (comma separated)">
+                  <Field label="Column names" help={INGEST.columnNamesInline}>
                     <Input
                       id="d-columns"
                       className="w-64 font-mono"
@@ -259,10 +282,15 @@ export function IngestPage() {
                       onChange={(e) => setDColumns(e.target.value)}
                     />
                   </Field>
-                  <Field label="Types (q cast string, e.g. sff)">
+                  <Field
+                    label="Types"
+                    help={INGEST.typesInline}
+                    href="https://code.kx.com/q/ref/cast/"
+                  >
                     <Input
                       id="d-types"
                       className="w-40 font-mono"
+                      placeholder="sff"
                       value={dTypes}
                       onChange={(e) => setDTypes(e.target.value)}
                     />
@@ -289,7 +317,7 @@ export function IngestPage() {
                     onChange={(e) => setFTable(e.target.value)}
                   />
                 </Field>
-                <Field label="Path, file or glob (relative to imports)">
+                <Field label="Path" help={INGEST.path}>
                   <Input
                     id="f-path"
                     className="w-72 font-mono"
@@ -329,7 +357,8 @@ export function IngestPage() {
               </div>
               <Check
                 id="f-create"
-                label="Create the table from the file header if it does not exist"
+                label="Create the table if it does not exist"
+                help={INGEST.createFile}
                 checked={fCreate}
                 onChange={setFCreate}
               />
@@ -341,7 +370,10 @@ export function IngestPage() {
                   <div className="flex flex-wrap gap-3">
                     {fFormat === "csv" ? (
                       <>
-                        <Field label="Column names (override, comma separated)">
+                        <Field
+                          label="Column names"
+                          help={INGEST.columnNamesFile}
+                        >
                           <Input
                             id="f-header"
                             className="w-64 font-mono"
@@ -349,7 +381,7 @@ export function IngestPage() {
                             onChange={(e) => setFHeader(e.target.value)}
                           />
                         </Field>
-                        <Field label="Header row (0 based, -1 for none)">
+                        <Field label="Header row" help={INGEST.headerRow}>
                           <Input
                             id="f-headerrow"
                             className="num w-24"
@@ -367,9 +399,14 @@ export function IngestPage() {
                             onChange={(e) => setFDecimal(e.target.value)}
                           />
                         </Field>
-                        <Field label="Types (q parse string, e.g. PSFF)">
+                        <Field
+                          label="Types"
+                          help={INGEST.typesFile}
+                          href="https://code.kx.com/q/ref/tok/"
+                        >
                           <Input
                             id="f-types"
+                            placeholder="SFF"
                             className="w-40 font-mono"
                             value={fTypes}
                             onChange={(e) => setFTypes(e.target.value)}
@@ -377,7 +414,7 @@ export function IngestPage() {
                         </Field>
                       </>
                     ) : null}
-                    <Field label="Only keep these columns (comma separated)">
+                    <Field label="Keep columns" help={INGEST.include}>
                       <Input
                         id="f-include"
                         className="w-64 font-mono"
@@ -386,7 +423,7 @@ export function IngestPage() {
                       />
                     </Field>
                   </div>
-                  <Field label="Post-parse transforms (JSON, column to q expression)">
+                  <Field label="Post-parse transforms" help={INGEST.postparse}>
                     <Textarea
                       id="f-post"
                       className="font-mono text-xs"
@@ -410,7 +447,7 @@ export function IngestPage() {
 
             <TabsContent value="kdb" className="flex flex-col gap-4 pt-3">
               <div className="flex flex-wrap gap-3">
-                <Field label="HDB path (relative to imports)">
+                <Field label="HDB path" help={INGEST.hdbPath}>
                   <Input
                     id="k-path"
                     className="w-72 font-mono"
@@ -424,6 +461,7 @@ export function IngestPage() {
               <Check
                 id="k-create"
                 label="Create tables if they do not exist"
+                help={INGEST.createKdb}
                 checked={kCreate}
                 onChange={setKCreate}
               />

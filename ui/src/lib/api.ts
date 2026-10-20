@@ -14,6 +14,14 @@ export class ApiError extends Error {
   }
 }
 
+// Network failures, timeouts and gateway errors usually clear up on their own, so they are retried.
+// exceptions: 400, 404, ...
+export function isTransient(err: unknown): boolean {
+  return err instanceof ApiError && (err.status === 0 || err.status === 502 || err.status === 503 || err.status === 504)
+}
+export const retryTransient = (failures: number, err: unknown) => failures < 3 && isTransient(err)
+export const retryDelay = (failures: number) => Math.min(500 * 2 ** failures, 4000)
+
 export interface TableColumn {
   name: string;
   type: string;
@@ -200,12 +208,9 @@ async function request<T>(
     // A failed job is returned with HTTP 400 but the body is still a job object.
     if (body && typeof body === "object" && "jobId" in body && "status" in body)
       return body as T;
-    const message = errorMessage(
-      body,
-      typeof body === "string" && body
-        ? body
-        : `${res.status} ${res.statusText}`,
-    );
+    // A proxy error page is HTML. Show status not markup.
+    const plain = typeof body === "string" && body && !/^\s*</.test(body) ? body : "";
+    const message = errorMessage(body, plain || `${res.status} ${res.statusText}`.trim());
     throw new ApiError(message, res.status, hintFor(message, res.status));
   }
   return body as T;

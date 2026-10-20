@@ -8,29 +8,59 @@ Everything else in this repo is unchanged from upstream. For setup, usage, and t
 
 # Quickstart
 
-From your DB Service directory, download the built package and start it alongside your stack:
+From your DB Service directory, download the built package:
 
 ```bash
 curl -fsSLO https://raw.githubusercontent.com/ajdair/kdbx-db-service/main/ui/docker-compose.ui.yaml
+```
+
+Start the package alongside your stack:
+```bash
 docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up -d
 ```
 
-Open `http://127.0.0.1:3000.`
+Open `http://127.0.0.1:3000/`
 
 To remove it, run `docker rm -f kx-db-ui`.
+
+!!! 
+    Run this in the folder where you started the DB Service. Compose reads only the files you name with `-f`, so if you started your stack with extra compose files (for example `docker-compose.fsi.yaml`), list them too, before the UI file:
+
+    ```bash
+    docker compose -f docker-compose.yaml -f docker-compose.fsi.yaml -f docker-compose.ui.yaml up -d
+    ```
+
+    If you leave one out, compose recreates the containers that file changes without its settings. To avoid retyping the list, set it once in the `.env` file next to the compose files:
+
+    ```bash
+    COMPOSE_FILE=docker-compose.yaml:docker-compose.fsi.yaml:docker-compose.ui.yaml
+    ```
+
+    After that, a plain `docker compose up -d` includes the UI.
+!!!
+    The package uses the newest release. Compose reuses an image it already has. To update to the `latest` package, pull it and start it again:
+
+    ```bash
+    docker compose -f docker-compose.yaml -f docker-compose.ui.yaml pull kx-db-ui
+    ```
+    ```bash
+    docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up -d
+    ```
 
 
 ## About the GUI
 
-The UI lives in [`ui/`](ui/). It is a small single-page app & talks only to the REST API on port 8080. You can:
+The UI lives in [`ui/`](ui/). It is a small single-page app & talks only to the REST API on port 8080.
 
-- overview page: status, row counts, data range, how fresh the data is, and the storage tiers
-- browse tables and schemas, preview rows, create tables, and drop them
-- run queries (structured builder, SQL, and q) with CSV export and a chart
-- start and monitor imports
-- delete rows
-- view the assembly config
-- open the Open API Spec and find the official skill and docs
+Features:
+
+- **Overview**: Status and overview of your service
+- **Tables**: Browse tables and schemas, preview rows, create & drop tables
+- **Query**: Run queries (structured builder, SQL, and q) with CSV export and a chart
+- **Ingest**: Start and monitor your data imports
+- **Delete**: Delete all or specific rows from your tables
+- **Config**: View your assembly config and download a copy
+- **Resources**: Helpful links & resources for DB Service
 
 **Overview:**
 
@@ -42,4 +72,8 @@ The UI lives in [`ui/`](ui/). It is a small single-page app & talks only to the 
 
 **Query:**
 
-![The query page, showing a SQL query and its results](ui/docs/screenshots/query.png)
+![The query page, showing a query builder and its results](ui/docs/screenshots/query.png)
+
+**Graph:**
+
+![The query page, showing an SQL query and its visualisation](ui/docs/screenshots/query_vis.png)

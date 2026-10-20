@@ -6,6 +6,8 @@ import {
   CopyIcon,
   ExternalLinkIcon,
   FileJsonIcon,
+  GitBranchIcon,
+  RocketIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +27,16 @@ const SKILL_URL =
   "https://github.com/KxSystems/kx-skills/tree/main/plugins/kdbx-knowledge/skills/kdbx-db-service";
 const DOCS_URL =
   "https://code.kx.com/kdb-x/services/db-service/introduction.html";
+const LICENSE_URL =
+  "https://code.kx.com/kdb-x/get_started/kdb-x-install.html#license-requirements";
+const PREREQ_URL =
+  "https://code.kx.com/kdb-x/services/db-service/quickstart.html#prerequisites";
+const INSTALL_URL =
+  "https://code.kx.com/kdb-x/get_started/kdb-x-install.html#online-installation-recommended";
+const REPO_URL = "https://github.com/KxSystems/kdbx-db-service";
+const Q_CLIENT_URL = "https://github.com/KxSystems/kdbx-db-service-q-client";
+const PY_CLIENT_URL =
+  "https://github.com/KxSystems/kdbx-db-service-python-client";
 
 function External({
   href,
@@ -126,6 +138,39 @@ export function ResourcesPage() {
             </CardHeader>
             <CardContent>
               <External href={DOCS_URL}>code.kx.com</External>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RocketIcon className="size-4" /> Getting started
+              </CardTitle>
+              <CardDescription>
+                What you need before you run the KDB-X DB Service: a license, the
+                prerequisites, and the recommended online install of KDB-X.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <External href={LICENSE_URL}>License requirements</External>
+              <External href={PREREQ_URL}>DB Service prerequisites</External>
+              <External href={INSTALL_URL}>Online installation</External>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GitBranchIcon className="size-4" /> Repositories and clients
+              </CardTitle>
+              <CardDescription>
+                The KDB-X Service repository, and the official q and Python clients for DB Service.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              <External href={REPO_URL}>DB Service</External>
+              <External href={Q_CLIENT_URL}>q client</External>
+              <External href={PY_CLIENT_URL}>Python client</External>
             </CardContent>
           </Card>
         </div>

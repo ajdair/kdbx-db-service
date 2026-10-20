@@ -19,7 +19,6 @@ export function ConfigPage() {
   const q = useQuery({
     queryKey: ["config", assembly],
     queryFn: () => exportAssembly(assembly || undefined),
-    retry: false,
   });
 
   return (

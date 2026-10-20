@@ -55,10 +55,15 @@ function Schema({ spec }: { spec: TableSpec }) {
   ].filter(([, v]) => v);
   return (
     <div className="flex flex-col gap-4">
-      {spec.description ? (
-        <p className="text-sm text-muted-foreground">{spec.description}</p>
-      ) : null}
       <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        {spec.description ? (
+          <div className="basis-full">
+            <dt className="text-xs text-muted-foreground uppercase">
+              Description
+            </dt>
+            <dd>{spec.description}</dd>
+          </div>
+        ) : null}
         {meta.map(([k, v]) => (
           <div key={k}>
             <dt className="text-xs text-muted-foreground uppercase">{k}</dt>
@@ -124,7 +129,6 @@ export function TablesPage() {
   const tables = useQuery({
     queryKey: ["tables", assembly],
     queryFn: () => listTables(asm),
-    retry: false,
   });
   const current =
     selected && tables.data?.includes(selected)
@@ -135,7 +139,6 @@ export function TablesPage() {
     queryKey: ["table", assembly, current],
     queryFn: () => describeTable(current, asm),
     enabled: !!current,
-    retry: false,
   });
 
   const preview = useMutation({
@@ -224,16 +227,6 @@ export function TablesPage() {
             </CardTitle>
             {current ? (
               <CardAction className="flex flex-wrap justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={preview.isPending}
-                  onClick={() => preview.mutate()}
-                >
-                  {preview.isPending
-                    ? "Loading"
-                    : `Preview ${Math.max(1, Number(rows) || 20)} rows`}
-                </Button>
                 <LinkButton to={`/query?table=${encodeURIComponent(current)}`}>
                   <SearchCodeIcon /> Query
                 </LinkButton>
@@ -279,6 +272,15 @@ export function TablesPage() {
                     onChange={(e) => setTo(e.target.value)}
                   />
                 </div>
+                <Button
+                  size="sm"
+                  disabled={preview.isPending}
+                  onClick={() => preview.mutate()}
+                >
+                  {preview.isPending
+                    ? "Loading"
+                    : `Preview ${Math.max(1, Number(rows) || 20)} rows`}
+                </Button>
               </div>
             ) : null}
 

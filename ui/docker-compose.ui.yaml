@@ -2,11 +2,18 @@
 #
 #   docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up -d
 #
+# If you started the stack with other compose files (for example docker-compose.fsi.yaml), list
+# them before this one.
+#
 # The UI joins the same project and the kx-db network, so no other config is needed.
+#
+# The image is the newest release (latest). Set DS_UI_TAG to pin a version, for example 0.1.1.
+# Compose reuses an image it already has, so to update run the same command with "pull kx-db-ui"
+# in place of "up -d", then "up -d" again.
 services:
   kx-db-ui:
     container_name: kx-db-ui
-    image: ghcr.io/ajdair/kdbx-db-service-ui:${DS_UI_TAG:-0.1.0}
+    image: ghcr.io/ajdair/kdbx-db-service-ui:${DS_UI_TAG:-latest}
     # Only used with --build from a checkout that has the ui/ folder (paths resolve from docker-compose.yaml).
     build: ./ui
     mem_limit: ${DS_OTHER_MEM_LIMIT:-0}

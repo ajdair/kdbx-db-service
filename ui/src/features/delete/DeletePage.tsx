@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { HelpTip } from "@/components/HelpTip";
+import { FILTER_HELP } from "@/lib/help";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -32,13 +34,18 @@ import { latestWindow, useTableSummary } from "@/lib/summary";
 function Field({
   label,
   children,
+  help,
 }: {
   label: string;
   children: React.ReactNode;
+  help?: string;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {help ? <HelpTip>{help}</HelpTip> : null}
+      </Label>
       {children}
     </div>
   );
@@ -59,7 +66,6 @@ export function DeletePage() {
   const tables = useQuery({
     queryKey: ["tables", assembly],
     queryFn: () => listTables(asm),
-    retry: false,
   });
   const [table, setTable] = useState("");
   // null means "not edited", so the window follows the table's latest day of data
@@ -142,9 +148,8 @@ export function DeletePage() {
       <Alert variant="destructive">
         <TriangleAlertIcon />
         <AlertDescription>
-          Beta feature. Deletion is permanent and cannot be rolled back. An
-          empty filter deletes every row in the window. The service rejects
-          windows that overlap an object-storage tier. Count the rows first.
+          Deletion is permanent and cannot be rolled back. An empty filter deletes every row in the window. The service rejects
+          windows that overlap an object-storage tier. Be sure to count the affected rows first.
         </AlertDescription>
       </Alert>
       <Card>
@@ -195,7 +200,10 @@ export function DeletePage() {
               />
             </Field>
           </div>
-          <Field label="Filter (JSON, required; [] matches every row in the window)">
+          <Field
+            label="Filter (JSON, required; [] matches every row in the window)"
+            help={FILTER_HELP}
+          >
             <Textarea
               id="x-filter"
               className="font-mono text-xs"

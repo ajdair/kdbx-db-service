@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppState } from "@/lib/app-state";
+import { useRecoverWhenReady } from "@/lib/recover";
 import { useStatus } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const NAV = [
 export function Layout() {
   const { assembly, setAssembly, theme, toggleTheme } = useAppState();
   const status = useStatus();
+  useRecoverWhenReady(status);
 
   return (
     <div className="flex min-h-svh flex-col md:flex-row">
