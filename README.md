@@ -23,29 +23,25 @@ Open `http://127.0.0.1:3000/`
 
 To remove it, run `docker rm -f kx-db-ui`.
 
-!!! 
-    Run this in the folder where you started the DB Service. Compose reads only the files you name with `-f`, so if you started your stack with extra compose files (for example `docker-compose.fsi.yaml`), list them too, before the UI file:
+> **Note**: 
+> Run this in the folder where you started the DB Service. Compose reads only the files you name with `-f`, so if you started your stack with extra compose files (for example `docker-compose.fsi.yaml`), list them too, before the UI file:
+> ```bash
+> docker compose -f docker-compose.yaml -f docker-compose.fsi.yaml -f docker-compose.ui.yaml up -d
+> ```
+> If you leave one out, compose recreates the containers that file changes without its settings. To avoid retyping the list, set it once in the `.env` file next to the compose files:
+> ```bash
+> COMPOSE_FILE=docker-compose.yaml:docker-compose.fsi.yaml:docker-compose.ui.yaml
+> ```
+> After that, a plain `docker compose up -d` includes the UI.
 
-    ```bash
-    docker compose -f docker-compose.yaml -f docker-compose.fsi.yaml -f docker-compose.ui.yaml up -d
-    ```
-
-    If you leave one out, compose recreates the containers that file changes without its settings. To avoid retyping the list, set it once in the `.env` file next to the compose files:
-
-    ```bash
-    COMPOSE_FILE=docker-compose.yaml:docker-compose.fsi.yaml:docker-compose.ui.yaml
-    ```
-
-    After that, a plain `docker compose up -d` includes the UI.
-!!!
-    The package uses the newest release. Compose reuses an image it already has. To update to the `latest` package, pull it and start it again:
-
-    ```bash
-    docker compose -f docker-compose.yaml -f docker-compose.ui.yaml pull kx-db-ui
-    ```
-    ```bash
-    docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up -d
-    ```
+> **Note**:
+> The package uses the newest release. Compose reuses an image it already has. To update to the `latest` package, pull it and start it again:
+> ```bash
+> docker compose -f docker-compose.yaml -f docker-compose.ui.yaml pull kx-db-ui
+> ```
+> ```bash
+> docker compose -f docker-compose.yaml -f docker-compose.ui.yaml up -d
+> ```
 
 
 ## About the GUI
